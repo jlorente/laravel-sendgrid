@@ -19,9 +19,11 @@
 
 namespace Jlorente\Laravel\SendGrid\Notifications\Channel;
 
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
-use Jlorente\SendGrid\SendGrid;
+use SendGrid;
+use SendGrid\Mail\Mail;
 
 /**
  * Class SendGridEmailChannel.
@@ -61,17 +63,28 @@ class SendGridEmailChannel
     public function send($notifiable, Notification $notification)
     {
         if (!$to = $notifiable->routeNotificationFor('sendgrid', $notification)) {
+            if ($notifiable instanceof AnonymousNotifiable) {
+                return;
+            }
+
             $to = $notifiable->email;
             if (!$to) {
                 return;
             }
         }
 
+        /* @var $message Mail */
         $message = $notification->toSendGrid($notifiable);
 
         if (config('sendgrid.is_channel_active') === false) {
             return true;
         }
+
+        if (!$message->getFrom()) {
+            $message->setFrom(config('sendgrid.from_default_address'), config('sendgrid.from_default_name'));
+        }
+
+        $message->addTo($to);
 
         try {
             return $this->client->send($message);

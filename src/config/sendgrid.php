@@ -19,6 +19,22 @@ return [
     'is_channel_active' => (bool) env('SENDGRID_CHANNEL_ACTIVE', true),
     /*
       |--------------------------------------------------------------------------
+      | From Default Address
+      |--------------------------------------------------------------------------
+      |
+      | Default address to set the message from value.
+     */
+    'from_default_address' => env('SENDGRID_FROM_DEFAULT_ADDRESS', env('MAIL_FROM_ADDRESS')),
+    /*
+      |--------------------------------------------------------------------------
+      | From Default Name
+      |--------------------------------------------------------------------------
+      |
+      | Default name to set the message from value.
+     */
+    'from_default_name' => env('SENDGRID_FROM_DEFAULT_NAME', env('MAIL_FROM_NAME')),
+    /*
+      |--------------------------------------------------------------------------
       | Raise Exception On Error
       |--------------------------------------------------------------------------
       |
