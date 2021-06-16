@@ -1,0 +1,38 @@
+{
+    "name": "jlorente/laravel-sendgrid",
+    "description": "Laravel integration for the SendGrid php sdk.",
+    "keywords": [
+        "php",
+        "jlorente",
+        "laravel",
+        "sengrid"
+    ],
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "José Lorente",
+            "email": "jose.lorente.martin@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.1.3",
+        "illuminate/support": ">=5.6",
+        "sendgrid/sendgrid": "~7"
+    },
+    "autoload": {
+        "psr-4": {
+            "Jlorente\\Laravel\\SendGrid\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Jlorente\\Laravel\\SendGrid\\SendGridServiceProvider"
+            ],
+            "aliases": {
+                "Connectus": "Jlorente\\Laravel\\SendGrid\\Facades\\SendGrid"
+            }
+        }
+    },
+    "minimum-stability": "stable"
+}
