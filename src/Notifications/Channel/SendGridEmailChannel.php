@@ -22,8 +22,10 @@ namespace Jlorente\Laravel\SendGrid\Notifications\Channel;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
+use Jlorente\Laravel\SendGrid\Exceptions\RequestException;
 use SendGrid;
 use SendGrid\Mail\Mail;
+use SendGrid\Response;
 
 /**
  * Class SendGridEmailChannel.
@@ -58,18 +60,20 @@ class SendGridEmailChannel
      *
      * @param mixed $notifiable
      * @param \Illuminate\Notifications\Notification $notification
-     * @return array|bool
+     * @return Response|null
+     * @throws RequestException
+     * @throws SendGrid\Mail\TypeException
      */
-    public function send($notifiable, Notification $notification)
+    public function send($notifiable, Notification $notification): ?Response
     {
         if (!$to = $notifiable->routeNotificationFor('sendgrid', $notification)) {
             if ($notifiable instanceof AnonymousNotifiable) {
-                return;
+                return null;
             }
 
             $to = $notifiable->email;
             if (!$to) {
-                return;
+                return null;
             }
         }
 
@@ -77,7 +81,7 @@ class SendGridEmailChannel
         $message = $notification->toSendGrid($notifiable);
 
         if (config('sendgrid.is_channel_active') === false) {
-            return true;
+            return null;
         }
 
         if (!$message->getFrom()) {
@@ -87,7 +91,7 @@ class SendGridEmailChannel
         $message->addTo($to);
 
         try {
-            return $this->client->send($message);
+            return $this->responseHandler($this->client->send($message));
         } catch (\Exception $ex) {
             Log::error('SendGrid API Exception', [
                 'code' => $ex->getCode()
@@ -100,6 +104,46 @@ class SendGridEmailChannel
                 throw $ex;
             }
         }
+    }
+
+    /**
+     * @param Response|bool $response
+     * @return Response
+     * @throws RequestException
+     */
+    private function responseHandler($response)
+    {
+        $code = $response->statusCode();
+        if ($code < 400) {
+            return $response;
+        }
+
+        throw $this->createRequestException($response);
+    }
+
+    /**
+     * @param Response $response
+     * @return RequestException
+     */
+    private function createRequestException(Response $response)
+    {
+        $level = (int) floor($response->statusCode() / 100);
+        if ($level === 4) {
+            $label = 'Client error';
+        } elseif ($level === 5) {
+            $label = 'Server error';
+        } else {
+            $label = 'Unsuccessful request';
+        }
+
+        $message = sprintf(
+            '%s: resulted in a `%s` response : %s',
+            $label,
+            $response->statusCode(),
+            $response->body()
+        );
+
+        return new RequestException($message, $response->statusCode());
     }
 
 }
