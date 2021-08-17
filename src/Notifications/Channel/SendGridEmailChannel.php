@@ -107,11 +107,11 @@ class SendGridEmailChannel
     }
 
     /**
-     * @param Response|bool $response
+     * @param Response $response
      * @return Response
      * @throws RequestException
      */
-    private function responseHandler($response)
+    private function responseHandler(Response $response): Response
     {
         $code = $response->statusCode();
         if ($code < 400) {
@@ -125,7 +125,7 @@ class SendGridEmailChannel
      * @param Response $response
      * @return RequestException
      */
-    private function createRequestException(Response $response)
+    private function createRequestException(Response $response): RequestException
     {
         $level = (int) floor($response->statusCode() / 100);
         if ($level === 4) {
