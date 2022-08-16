@@ -25,11 +25,12 @@ use Illuminate\Support\Facades\Log;
 use Jlorente\Laravel\SendGrid\Exceptions\RequestException;
 use SendGrid;
 use SendGrid\Mail\Mail;
+use SendGrid\Mail\TypeException;
 use SendGrid\Response;
 
 /**
  * Class SendGridEmailChannel.
- * 
+ *
  * A notification channel to send emails through SendGrid API.
  *
  * @author Jose Lorente <jose.lorente.martin@gmail.com>
@@ -88,7 +89,11 @@ class SendGridEmailChannel
             $message->setFrom(config('sendgrid.from_default_address'), config('sendgrid.from_default_name'));
         }
 
-        $message->addTo($to);
+        try {
+            $message->addTo($to);
+        } catch (TypeException $exception) {
+            return null;
+        }
 
         try {
             return $this->responseHandler($this->client->send($message));
